@@ -3,7 +3,7 @@ package it.maitre2.simulation;
 import it.maitre2.model.Task;
 import it.maitre2.model.TaskType;
 
-public class Event {
+public class Event implements Comparable<Event> {
     private final double time;
     private final EventType type;
     private final int tableId;
@@ -35,13 +35,13 @@ public class Event {
     public int getWaiterId() { return waiterId; }
     public TaskType getTaskType() { return taskType; }
 
-
+    @Override
     public int compareTo(Event other){
         return Double.compare(this.time, other.time);
     }
 
     @Override
     public String toString() {
-        return "Event{" + type +", time=" + time + ", table=" + tableId + (type == EventType.TASK_DONE ? (", waiter=" + waiterId + ", task= " + taskType): "") + "}";
+        return "Event[" + type +", time= " + time + ", table= " + tableId + (type == EventType.TASK_DONE ? (", waiter=" + waiterId + ", task= " + taskType): "") + "]";
     }
 }

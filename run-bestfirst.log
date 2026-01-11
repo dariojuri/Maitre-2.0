@@ -1,0 +1,73 @@
+# Run started at 2026-01-11T20:03:24.277894700
+=== START SIMULATION (endTime=80.0) ===
+
+---EVENT-> Event[NEW_TABLE, time= 0.0, table= 101]
+
+---EVENT-> Event[NEW_TABLE, time= 1.0, table= 102]
+
+---EVENT-> Event[READY_TO_ORDER, time= 1.2304302967434273, table= 101]
+---ASSIGN -> waiter 2 does Task{type=TAKE_ORDER, tableId= 101, createdAt=1.2304302967434273, numPlates=0}(duration=1.6666666666666667)
+
+---EVENT-> Event[READY_TO_ORDER, time= 1.7578027905957803, table= 102]
+---ASSIGN -> waiter 1 does Task{type=TAKE_ORDER, tableId= 102, createdAt=1.7578027905957803, numPlates=0}(duration=2.0)
+
+---EVENT-> Event[NEW_TABLE, time= 2.0, table= 103]
+
+---EVENT-> Event[READY_TO_ORDER, time= 2.5592019658112446, table= 103]
+
+---EVENT-> Event[TASK_DONE, time= 2.8970969634100943, table= 101, waiter=2, task= TAKE_ORDER]
+---DONE -> waiter=2does TAKE_ORDERfor table=101)
+---ASSIGN -> waiter 2 does Task{type=TAKE_ORDER, tableId= 103, createdAt=2.5592019658112446, numPlates=0}(duration=1.6666666666666667)
+
+---EVENT-> Event[TASK_DONE, time= 3.7578027905957803, table= 102, waiter=1, task= TAKE_ORDER]
+---DONE -> waiter=1does TAKE_ORDERfor table=102)
+
+---EVENT-> Event[TASK_DONE, time= 4.563763630076761, table= 103, waiter=2, task= TAKE_ORDER]
+---DONE -> waiter=2does TAKE_ORDERfor table=103)
+
+---EVENT-> Event[FOOD_READY, time= 9.421452441657095, table= 101]
+---ASSIGN -> waiter 2 does Task{type=SERVE_FOOD, tableId= 101, createdAt=9.421452441657095, numPlates=2}(duration=2.8333333333333335)
+
+---EVENT-> Event[FOOD_READY, time= 10.03984434984527, table= 102]
+---ASSIGN -> waiter 1 does Task{type=SERVE_FOOD, tableId= 102, createdAt=10.03984434984527, numPlates=4}(duration=3.8)
+
+---EVENT-> Event[FOOD_READY, time= 10.447700111123805, table= 103]
+
+---EVENT-> Event[TASK_DONE, time= 12.25478577499043, table= 101, waiter=2, task= SERVE_FOOD]
+---DONE -> waiter=2does SERVE_FOODfor table=101)
+---ASSIGN -> waiter 2 does Task{type=SERVE_FOOD, tableId= 103, createdAt=10.447700111123805, numPlates=3}(duration=3.0)
+
+---EVENT-> Event[TASK_DONE, time= 13.839844349845269, table= 102, waiter=1, task= SERVE_FOOD]
+---DONE -> waiter=1does SERVE_FOODfor table=102)
+
+---EVENT-> Event[TASK_DONE, time= 15.25478577499043, table= 103, waiter=2, task= SERVE_FOOD]
+---DONE -> waiter=2does SERVE_FOODfor table=103)
+
+---EVENT-> Event[BILL_REQUEST, time= 23.083211200120893, table= 101]
+---ASSIGN -> waiter 1 does Task{type=BILL, tableId= 101, createdAt=23.083211200120893, numPlates=0}(duration=1.5)
+
+---EVENT-> Event[TASK_DONE, time= 24.583211200120893, table= 101, waiter=1, task= BILL]
+---DONE -> waiter=1does BILLfor table=101)
+
+---EVENT-> Event[BILL_REQUEST, time= 26.006867001328427, table= 103]
+---ASSIGN -> waiter 2 does Task{type=BILL, tableId= 103, createdAt=26.006867001328427, numPlates=0}(duration=1.25)
+
+---EVENT-> Event[TASK_DONE, time= 27.256867001328427, table= 103, waiter=2, task= BILL]
+---DONE -> waiter=2does BILLfor table=103)
+
+---EVENT-> Event[BILL_REQUEST, time= 32.32197969267374, table= 102]
+---ASSIGN -> waiter 1 does Task{type=BILL, tableId= 102, createdAt=32.32197969267374, numPlates=0}(duration=1.5)
+
+---EVENT-> Event[TASK_DONE, time= 33.82197969267374, table= 102, waiter=1, task= BILL]
+---DONE -> waiter=1does BILLfor table=102)
+=== END SIMULATION at time=33.82197969267374) ===
+
+--- WAITERS ---
+Waiter{id= 1, eff= 1.0, busy= false, workloadTime= 8.8}
+Waiter{id= 2, eff= 1.2, busy= false, workloadTime= 10.416666666666668}
+
+--- TABLES ---
+Table{id=101, numClients=2, state=DONE}
+Table{id=102, numClients=4, state=DONE}
+Table{id=103, numClients=3, state=DONE}
+# Run closed

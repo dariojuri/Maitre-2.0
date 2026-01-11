@@ -50,6 +50,12 @@ public class DiningRoom {
     public List<Waiter> getWaiters() {
         return Collections.unmodifiableList(waiters);
     }
+    public Waiter getWaiterById(int waiterId) {
+        for(Waiter w : waiters) {
+            if(w.getId() == waiterId) return w;
+        }
+        throw new IllegalArgumentException("waiterId " + waiterId + " does not exist");
+    }
 
     public List<Waiter> getFreeWaiter() {
         List<Waiter> freeWaiters = new ArrayList<>();

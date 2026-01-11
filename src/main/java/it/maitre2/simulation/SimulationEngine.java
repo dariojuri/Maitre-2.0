@@ -1,5 +1,6 @@
 package it.maitre2.simulation;
 
+import it.maitre2.util.RunLogger;
 import it.maitre2.agent.Assignment;
 import it.maitre2.agent.Strategy;
 import it.maitre2.kitchen.Kitchen;
@@ -10,6 +11,8 @@ import java.util.PriorityQueue;
 
 public class SimulationEngine {
 
+    private final RunLogger logger;
+
     private final DiningRoom room;
     private final Kitchen kitchen;
     private final Strategy strategy;
@@ -17,11 +20,12 @@ public class SimulationEngine {
     private final Random rng;
     private double now = 0.0;
 
-    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed) {
+    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger) {
         this.room = room;
         this.kitchen = kitchen;
         this.strategy = strategy;
         rng = new Random(seed);
+        this.logger = logger;
     }
 
     public double now() { return now; }
@@ -42,6 +46,9 @@ public class SimulationEngine {
 
     public void step() {
         Event e = eventQueue.poll();
+
+        logger.log("\n---EVENT-> " + e);
+
         if(e == null) return;
 
         now = e.getTime();
@@ -85,15 +92,14 @@ public class SimulationEngine {
             }
 
             case TASK_DONE -> {
-                int waiterId = e.getTableId();
+                int waiterId = e.getWaiterId();
                 TaskType doneType = e.getTaskType();
 
                 //libera cameriere
-                Waiter doneWaiter = room.getWaiters().stream()
-                        .filter(w -> w.getId() == waiterId)
-                        .findFirst()
-                        .orElseThrow();
+                Waiter doneWaiter = room.getWaiterById(waiterId);
                 doneWaiter.setBusy(false);
+
+                logger.log("---DONE -> waiter=" + waiterId + "does " + doneType + "for table=" + tableId + ")");
 
                 //aggiornamento di stato tavolo
                 Table t = room.getTable(tableId);
@@ -106,8 +112,6 @@ public class SimulationEngine {
                 }
             }
         }
-          //IMPORTANT: qui dopo ogni evento, se ci sono task e camerieri liberi,
-        //chiameremo la strategy er assegnare, lo aggiungiamo al prossimo passo
         }
 
         private void dispatchAssignment() {
@@ -129,6 +133,8 @@ public class SimulationEngine {
 
                 //durata stimata
                 double duration = estimateTaskDurationMinutes(task, waiter);
+
+                logger.log("---ASSIGN -> waiter " + waiter.getId() + " does " + task + "(duration=" + duration + ")");
 
                 //aggiorna carico
                 waiter.addWorkloadTime(duration);
