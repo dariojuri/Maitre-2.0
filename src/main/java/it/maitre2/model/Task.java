@@ -22,6 +22,6 @@ public class Task {
 
     @Override
     public String toString() {
-        return "Task {" + type + ", " + tableId + ", " + createdAt + ", " + numPlates + "}";
+        return "Task{type=" + type + ", tableId= " + tableId + ", createdAt=" + createdAt + ", numPlates=" + numPlates + "}";
     }
 }
