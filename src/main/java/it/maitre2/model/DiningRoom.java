@@ -21,7 +21,7 @@ public class DiningRoom {
             tablesById.put(t.getId(), t);
         }
         this.readyTasks = new ArrayDeque<>();
-        
+
     }
 
     public void addTable(Table table) {
