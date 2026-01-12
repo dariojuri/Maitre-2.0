@@ -40,7 +40,7 @@ public class MetricCollector {
         return max - min;
     }
 
-    //Coefficiente di variazione (std/mean) 0 = perfettamente bilanciato
+
     public double utilizationCV(List<Waiter> waiters, double endTime){
         int n = waiters.size();
         if(n == 0) return 0.0;

@@ -24,23 +24,20 @@ public class SimulationEngine {
     private double now = 0.0;
     private int nextTableId = 1;
 
+    private final EngineConfig cfg;
     private int createdTables = 0;
-    private final int maxTables = 100;
-
-    private final double minInterArrival = 2.0; //minuti (rush hour)
-    private final double maxInterArrival = 14.0; //minuti (chiusura)
-    private final double k = 10.0;              //ripidità sigmoide
-    private final double endTime;               //durata turno
 
 
-    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger, MetricCollector metrics, double endTime) {
+
+
+    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger, MetricCollector metrics, EngineConfig cfg) {
         this.room = room;
         this.kitchen = kitchen;
         this.strategy = strategy;
         rng = new Random(seed);
         this.logger = logger;
         this.metrics = metrics;
-        this.endTime = endTime;
+        this.cfg = cfg;
     }
 
     public double now() { return now; }
@@ -75,21 +72,21 @@ public class SimulationEngine {
 
         switch(e.getType()){
             case ARRIVAL -> {
-                if(createdTables >= maxTables) return;
+                if(createdTables >= cfg.maxTables) return;
                 createdTables++;
 
                 int id = newTableId();
-                int clients = 2 +rng.nextInt(4); // da due a cinque clienti per tavolo
-
+                int clients = 2 + rng.nextInt(4); // da due a cinque clienti per tavolo
                 Table t = new Table(id, clients, TableState.NEW, now);
                 room.addTable(t);
+
                 schedule(new Event(now + delay(0.5,1.5),EventType.READY_TO_ORDER,id));
 
                 logger.log(String.format( "---ARRIVAL -> table %d with %d clients", id, clients));
 
                 double next = now + interArrivalMinutes();
 
-                if(next <= endTime){
+                if(next <= cfg.durationMinutes){
                     schedule(new Event(next, EventType.ARRIVAL, -1));
                 }
             }
@@ -210,11 +207,11 @@ public class SimulationEngine {
         }
 
         private double interArrivalMinutes(){
-            double x = now / endTime; //0..1
-            double sigmoid = 1.0 / (1.0 + Math.exp(-k * (x - 0.5)));
+            double x = now / cfg.durationMinutes; //0..1
+            double sigmoid = 1.0 / (1.0 + Math.exp(-cfg.kSigmoid * (x - 0.5)));
 
             //invertiamo: più sigmoid è alta, al centro del turno, più arrivi e meno tempo fra gli arrivi
-            double mean = maxInterArrival - (maxInterArrival - minInterArrival) * sigmoid;
+            double mean = cfg.maxInterArrival - (cfg.maxInterArrival - cfg.minInterArrival) * sigmoid;
 
             //aggiungiamo anche rumore
             return mean * (0.7 + 0.6*rng.nextDouble());

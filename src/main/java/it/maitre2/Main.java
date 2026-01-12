@@ -41,6 +41,8 @@ public class Main {
                 seed+1
         );
 
+        EngineConfig cfg = new EngineConfig(300, 2.0, 14.0, 10.0, 100);
+
 
         //Scegli strategia -- ricorda di cambiare il nome del file del logger
         Strategy strategy = new BestFirstStrategy();
@@ -52,7 +54,7 @@ public class Main {
 
             double endTime = 300.0; //4 ore se sono "minuti"
 
-            SimulationEngine engine = new SimulationEngine(room, kitchen, strategy, seed, logger, metrics, endTime);
+            SimulationEngine engine = new SimulationEngine(room, kitchen, strategy, seed, logger, metrics, cfg);
 
             //Pianifica arrivi tavoli
             engine.schedule(new Event(0.0, EventType.ARRIVAL, -1));
