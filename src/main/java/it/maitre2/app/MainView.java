@@ -87,7 +87,7 @@ public class MainView {
                                 row("Jitter max", tfKitchenJitter)
                         )
                 ),
-                titled("Waiters (edit efficiency)",
+                titled("Waiters",
                         waiterTable
                 ),
                 new HBox(10, btnRR, btnBF, cbSaveLog)
@@ -153,10 +153,7 @@ public class MainView {
         List<Double> effs = new ArrayList<>();
         for (WaiterRow wr : waiterRows) effs.add(wr.efficiency.get());
 
-        // numWaiters è derivato dalla tabella
-        int numWaiters = effs.size();
 
-        // effMean/effStd non usati in modalità manuale -> passiamo null
         return new SimulationConfig(
                 duration, seed,
                 effs,
@@ -169,8 +166,8 @@ public class MainView {
     private void showResult(RunResult r) {
         lblStrategy.setText(r.strategyName);
         lblAssigned.setText(String.valueOf(r.assignedTasks));
-        lblAvgWait.setText(String.format("%.3f", r.avgTaskWait));
-        lblUtilCV.setText(String.format("%.3f", r.utilizationCV));
+        lblAvgWait.setText(String.format("%.4f", r.avgTaskWait));
+        lblUtilCV.setText(String.format("%.4f", r.utilizationCV));
         lblLogPath.setText(r.logFilePath == null ? "-" : r.logFilePath);
 
         for (TableState s : TableState.values()) {
@@ -224,7 +221,7 @@ public class MainView {
         colUtil.setCellValueFactory(c -> c.getValue().utilization);
 
         waiterResultTable.getColumns().addAll(colId, colEff, colWork, colUtil);
-        waiterResultTable.setPrefHeight(220);
+        waiterResultTable.setPrefHeight(250);
     }
 
     private GridPane buildStateBox() {
