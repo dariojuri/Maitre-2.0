@@ -1,5 +1,6 @@
 package it.maitre2.simulation;
 
+import it.maitre2.metrics.MetricCollector;
 import it.maitre2.util.RunLogger;
 import it.maitre2.agent.Assignment;
 import it.maitre2.agent.Strategy;
@@ -13,19 +14,33 @@ public class SimulationEngine {
 
     private final RunLogger logger;
 
+    private final MetricCollector metrics;
+
     private final DiningRoom room;
     private final Kitchen kitchen;
     private final Strategy strategy;
     private final PriorityQueue<Event> eventQueue = new PriorityQueue<>();
     private final Random rng;
     private double now = 0.0;
+    private int nextTableId = 1;
 
-    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger) {
+    private int createdTables = 0;
+    private final int maxTables = 100;
+
+    private final double minInterArrival = 2.0; //minuti (rush hour)
+    private final double maxInterArrival = 14.0; //minuti (chiusura)
+    private final double k = 10.0;              //ripidità sigmoide
+    private final double endTime;               //durata turno
+
+
+    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger, MetricCollector metrics, double endTime) {
         this.room = room;
         this.kitchen = kitchen;
         this.strategy = strategy;
         rng = new Random(seed);
         this.logger = logger;
+        this.metrics = metrics;
+        this.endTime = endTime;
     }
 
     public double now() { return now; }
@@ -46,28 +61,50 @@ public class SimulationEngine {
 
     public void step() {
         Event e = eventQueue.poll();
-
         logger.log("\n---EVENT-> " + e);
-
         if(e == null) return;
 
         now = e.getTime();
         handleEvent(e);
+
         dispatchAssignment();
     }
 
     private void handleEvent(Event e) {
         int tableId = e.getTableId();
-        Table table = room.getTable(tableId);
 
         switch(e.getType()){
+            case ARRIVAL -> {
+                if(createdTables >= maxTables) return;
+                createdTables++;
+
+                int id = newTableId();
+                int clients = 2 +rng.nextInt(4); // da due a cinque clienti per tavolo
+
+                Table t = new Table(id, clients, TableState.NEW, now);
+                room.addTable(t);
+                schedule(new Event(now + delay(0.5,1.5),EventType.READY_TO_ORDER,id));
+
+                logger.log(String.format( "---ARRIVAL -> table %d with %d clients", id, clients));
+
+                double next = now + interArrivalMinutes();
+
+                if(next <= endTime){
+                    schedule(new Event(next, EventType.ARRIVAL, -1));
+                }
+            }
+
             case NEW_TABLE -> {
+                Table table = room.getTable(tableId);
+
                 //il tavolo entra nello stato "ready to order" dopo un piccolo delay
                 table.setState(TableState.NEW, now);
                 schedule(new Event(now + delay(0.5, 1.5),EventType.READY_TO_ORDER, tableId));
             }
 
             case READY_TO_ORDER -> {
+                Table table = room.getTable(tableId);
+
                 table.setState(TableState.WAITING_ORDER, now);
                 room.pushReadyTask(new Task(TaskType.TAKE_ORDER, tableId, now, 0));
 
@@ -78,6 +115,8 @@ public class SimulationEngine {
             }
 
             case FOOD_READY ->{
+                Table table = room.getTable(tableId);
+
                 table.setState(TableState.WAITING_FOOD, now);
                 int plates = table.getNumClients();
                 room.pushReadyTask(new Task(TaskType.SERVE_FOOD, tableId, now, plates));
@@ -87,6 +126,8 @@ public class SimulationEngine {
             }
 
             case BILL_REQUEST ->{
+                Table table = room.getTable(tableId);
+
                 table.setState(TableState.WAITING_BILL, now);
                 room.pushReadyTask(new Task(TaskType.BILL, tableId , now , 0 ));
             }
@@ -99,7 +140,7 @@ public class SimulationEngine {
                 Waiter doneWaiter = room.getWaiterById(waiterId);
                 doneWaiter.setBusy(false);
 
-                logger.log("---DONE -> waiter=" + waiterId + "does " + doneType + "for table=" + tableId + ")");
+                logger.log("---DONE -> waiter " + waiterId + " does " + doneType + " for table=" + tableId + ")");
 
                 //aggiornamento di stato tavolo
                 Table t = room.getTable(tableId);
@@ -124,6 +165,8 @@ public class SimulationEngine {
 
                 Task task = a.task();
                 Waiter waiter = a.waiter();
+
+                metrics.recordAssignment(task, now);
 
                 //rimuovi task dalla coda
                 room.removeReadyTask(task);
@@ -154,12 +197,26 @@ public class SimulationEngine {
         }
 
         private double delay(double min, double max) {
-        return min + rng.nextDouble() * (max - min);
+            return min + rng.nextDouble() * (max - min);
         }
 
         private int samplePlates(int numClients) {
-        //minimal: un piatto a persona
+            //minimal: un piatto a persona
             return Math.max(1, numClients / 2);
         }
 
+        private int newTableId(){
+            return nextTableId++;
+        }
+
+        private double interArrivalMinutes(){
+            double x = now / endTime; //0..1
+            double sigmoid = 1.0 / (1.0 + Math.exp(-k * (x - 0.5)));
+
+            //invertiamo: più sigmoid è alta, al centro del turno, più arrivi e meno tempo fra gli arrivi
+            double mean = maxInterArrival - (maxInterArrival - minInterArrival) * sigmoid;
+
+            //aggiungiamo anche rumore
+            return mean * (0.7 + 0.6*rng.nextDouble());
+        }
 }

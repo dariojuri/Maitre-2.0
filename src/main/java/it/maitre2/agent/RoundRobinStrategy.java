@@ -13,8 +13,12 @@ public class RoundRobinStrategy implements Strategy {
         if(readyTasks.isEmpty() || freeWaiters.isEmpty()){ return null; }
 
         Task task = readyTasks.get(0); //FIFO
-        Waiter w = freeWaiters.get(nextIndex % readyTasks.size());
-        nextIndex++;
+
+        //Normalizza l'indice rispetto alla dimensione corrente
+        nextIndex = nextIndex % readyTasks.size();
+        Waiter w = freeWaiters.get(nextIndex);
+
+        nextIndex = (nextIndex + 1) % freeWaiters.size();
         return new Assignment(task, w);
     }
 }

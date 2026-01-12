@@ -10,8 +10,8 @@ public class DiningRoom {
     public DiningRoom(List<Waiter> waiters, List<Table> tables) {
         if(waiters==null || waiters.isEmpty())
             throw new IllegalArgumentException("waiters is null or empty");
-        if(tables==null || tables.isEmpty())
-            throw new IllegalArgumentException("tables is null or empty");
+        if(tables==null)
+            throw new IllegalArgumentException("tables is null");
 
         this.waiters = new ArrayList<>(waiters);
         this.tablesById = new HashMap<>();
@@ -36,6 +36,9 @@ public class DiningRoom {
         Table t = tablesById.get(tableId);
         if(t == null) { throw new IllegalArgumentException("Table with id " + tableId + " does not exist"); }
         return t;
+    }
+    public boolean containsTable(int tableId) {
+        return tablesById.containsKey(tableId);
     }
 
     public Collection<Table> getTables() {
