@@ -5,7 +5,7 @@ import java.util.Objects;
 public class Task {
     private final TaskType type;
     private final int tableId;
-    private final double createdAt;  //tempo simulato
+    private final double createdAt;
     private final int numPlates;
 
     public Task(TaskType type, int tableId, double createdAt, int numPlates) {
@@ -16,8 +16,11 @@ public class Task {
     }
 
     public TaskType getType() { return type; }
+
     public int getTableId() { return tableId; }
+
     public double getCreatedAt() { return createdAt; }
+
     public int getNumPlates() { return numPlates; }
 
     @Override

@@ -1,10 +1,11 @@
 package it.maitre2.model;
 
 public class Waiter {
+
     private final int id;
     private final double efficiency; // >0, 0.8 lento, 1.0 medio, 1.2 veloce
     private boolean busy;
-    private double workloadTime; //somma dei tempi assegnati (metrica carico)
+    private double workloadTime; //tempo di lavoro
 
     public Waiter(int id, double efficiency) {
         if (efficiency<=0) throw new IllegalArgumentException("efficiency must be greater than zero");
@@ -15,6 +16,7 @@ public class Waiter {
     }
 
     public int getId() { return id; }
+
     public double getEfficiency() { return efficiency; }
 
     public boolean isBusy() { return busy; }
