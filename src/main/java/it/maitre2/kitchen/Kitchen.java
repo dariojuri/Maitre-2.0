@@ -8,9 +8,9 @@ import java.util.Random;
 
 public class Kitchen {
 
-    private final double baseMinutes;
-    private final double perPlateMinutes;
-    private final double jitterMaxMinutes;
+    private final double baseMinutes;       //Minuti minimi per una qualsiasi preparazione
+    private final double perPlateMinutes;   //Minuti aggiunti per un singolo piatto
+    private final double jitterMaxMinutes;  //Variazione massima casuale
     private final Random rng;
 
     public Kitchen(double baseMinutes, double perPlateMinutes, double jitterMaxMinutes, long seed) {
@@ -20,9 +20,11 @@ public class Kitchen {
         this.rng = new Random(seed);
     }
 
-    //Pianifica l'evento FOOD_READY a partire da (now) e dal numero di piatti
+    //Pianifica l'evento FOOD_READY a partire da "now" e dal numero di piatti
     public void scheduleFoodReady(SimulationEngine engine, double now, int tableId, int plates) {
-        double prep = baseMinutes + perPlateMinutes*plates + jitter();
+
+        double prep = baseMinutes + (perPlateMinutes*plates) + jitter();
+
         engine.schedule(new Event(now + prep, EventType.FOOD_READY, tableId));
     }
 
