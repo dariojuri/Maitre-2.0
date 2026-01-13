@@ -6,6 +6,7 @@ import it.maitre2.model.Waiter;
 import java.util.List;
 
 public class RoundRobinStrategy implements Strategy {
+
     private int nextIndex = 0;
 
     @Override

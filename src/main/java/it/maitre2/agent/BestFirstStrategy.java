@@ -1,7 +1,6 @@
 package it.maitre2.agent;
 
 import it.maitre2.model.Task;
-import it.maitre2.model.TaskType;
 import it.maitre2.model.Waiter;
 
 import java.util.List;
@@ -28,12 +27,13 @@ public class BestFirstStrategy implements Strategy {
         return new Assignment(bestTask, bestWaiter);
     }
 
+
     private double cost(Task t, Waiter w, double now){
         //urgenza: più bassa = più urgente
         double urgency = switch(t.getType()){
             case SERVE_FOOD -> 0.0;
             case BILL -> 1.0;
-            case TAKE_ORDER -> 0.0;
+            case TAKE_ORDER -> 2.0;
         };
 
         //attesa accumulata dal task, più aspetta = più urgente
@@ -47,9 +47,10 @@ public class BestFirstStrategy implements Strategy {
         };
         double est = base / w.getEfficiency();
 
-        //penalizza camerieri già carichi
-        double load = w.getWorkloadTime();
+        //penalizza camerieri già carichi con normalizzazione
+        double load = w.getWorkloadTime() / w.getEfficiency();
 
-        return urgency*10.0 + est + load*0.1 - 0.5*waiting;
+        return (urgency*2.0) + (est*0.2) + (load*0.01) - (10.0*waiting);
     }
+
 }
