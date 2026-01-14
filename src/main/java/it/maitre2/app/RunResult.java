@@ -1,6 +1,5 @@
 package it.maitre2.app;
 
-import it.maitre2.model.Table;
 import it.maitre2.model.TableState;
 
 import java.util.EnumMap;
@@ -18,22 +17,19 @@ public class RunResult {
     public final Map<TableState, Integer> tablesByState;
     public final List<WaiterSnapshot> waiters;
 
-    public final String logFilePath; //null se non salvato
 
     public final double makespanMinutes;
 
     public RunResult(String strategyName,
                      long assignedTasks, double avgTaskWait,
                      double utilizationCV,
-                     Map<TableState, Integer> tablesByState, List<WaiterSnapshot> waiters,
-                     String logFilePath, double makespanMinutes) {
+                     Map<TableState, Integer> tablesByState, List<WaiterSnapshot> waiters, double makespanMinutes) {
         this.strategyName = strategyName;
         this.assignedTasks = assignedTasks;
         this.avgTaskWait = avgTaskWait;
         this.utilizationCV = utilizationCV;
         this.tablesByState = tablesByState;
         this.waiters = waiters;
-        this.logFilePath = logFilePath;
         this.makespanMinutes = makespanMinutes;
     }
 

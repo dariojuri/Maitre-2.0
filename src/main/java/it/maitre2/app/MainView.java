@@ -25,47 +25,55 @@ import java.util.List;
 public class MainView {
 
     // --- UI state ---
+    //Configurazione tempo
     private final TextField tfDuration = new TextField("240");
     private final TextField tfSeed = new TextField("42");
     private final TextField tfMaxTables = new TextField("60");
 
+    //Configurazione sigmoide
     private final TextField tfMinIA = new TextField("1.0");
     private final TextField tfMaxIA = new TextField("8.0");
     private final TextField tfK = new TextField("10.0");
 
+    //Configurazione cucina
     private final TextField tfKitchenBase = new TextField("5.0");
     private final TextField tfKitchenPerPlate = new TextField("1.0");
     private final TextField tfKitchenJitter = new TextField("3.0");
 
-    private final CheckBox cbSaveCsv = new CheckBox("Save result to CSV");
+    //Pulsanti azione
     private final Button btnRR = new Button("Run Round Robin");
     private final Button btnBF = new Button("Run Best First");
     private final Button btnBoth = new Button("Run Both");
+    private final CheckBox cbSaveCsv = new CheckBox("Save result to CSV");
 
-    // Waiters table
+    //Configurazione waiter
     private final TableView<WaiterRow> waiterTable = new TableView<>();
     private final ObservableList<WaiterRow> waiterRows = FXCollections.observableArrayList();
     private final Button btnAddWaiter = new Button("+ Add Waiter");
     private final Button btnRemoveWaiter = new Button("- Remove Waiter");
 
-    // Results
+    //Risultati
     private final Label lblStrategy = new Label("-");
     private final Label lblAvgWait = new Label("-");
     private final Label lblUtilCV = new Label("-");
     private final Label lblAssigned = new Label("-");
     private final Label lblCsvPath = new Label("-");
 
+    //Risultati RunBoth
     private final TableView<CompareRow> compareTable = new TableView<>();
     private final ObservableList<CompareRow> compareRows = FXCollections.observableArrayList();
 
+    //Risultati waiters
     private final TableView<WaiterResultRow> waiterResultTable = new TableView<>();
     private final ObservableList<WaiterResultRow> waiterResultRows = FXCollections.observableArrayList();
 
+    //Grafico comparazione waiters
     private final CategoryAxis waiterXAxis = new CategoryAxis();
     private final NumberAxis waiterYAxis = new NumberAxis();
     private final BarChart<String, Number> waiterCompareChart = new BarChart<>(waiterXAxis, waiterYAxis);
 
     private final Parent root;
+
 
     public MainView() {
         root = build();
@@ -95,7 +103,7 @@ public class MainView {
                 titled("Kitchen",
                         grid(
                                 row("Base minutes", tfKitchenBase),
-                                row("Per plate", tfKitchenPerPlate),
+                                row("Min per plate", tfKitchenPerPlate),
                                 row("Jitter max", tfKitchenJitter)
                         )
                 ),
@@ -140,6 +148,7 @@ public class MainView {
         return sp;
     }
 
+    //Azioni per i pulsanti
     private void wire() {
         btnRR.setOnAction(e -> run(new RoundRobinStrategy()));
         btnBF.setOnAction(e -> run(new BestFirstStrategy()));
@@ -159,6 +168,7 @@ public class MainView {
 
             RunResult r = SimulationRunner.run(cfg, strategy, saveLog);
             showResult(r);
+
         } catch (Exception ex) {
             showError(ex.getMessage());
         }
@@ -182,18 +192,50 @@ public class MainView {
 
     //endregion
 
+    private double readDouble(TextField tf, String name) {
+        String s = tf.getText().trim();
+        if (s.isEmpty()) throw new IllegalArgumentException(name + " is empty");
+        try {
+            return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(name + " must be a number");
+        }
+    }
+
+    private int readInt(TextField tf, String name) {
+        String s = tf.getText().trim();
+        if (s.isEmpty()) throw new IllegalArgumentException(name + " is empty");
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(name + " must be an integer");
+        }
+    }
+
+    private long readLong(TextField tf, String name) {
+        String s = tf.getText().trim();
+        if (s.isEmpty()) throw new IllegalArgumentException(name + " is empty");
+        try {
+            return Long.parseLong(s);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(name + " must be an integer");
+        }
+    }
+
+
     private SimulationConfig buildConfigFromUI() {
-        double duration = parseDouble(tfDuration);
-        long seed = parseLong(tfSeed);
-        int maxTables = parseInt(tfMaxTables);
+        double duration = readDouble(tfDuration, "Duration (min)");
+        long seed = readLong(tfSeed, "Seed");
+        int maxTables = readInt(tfMaxTables, "Max tables");
 
-        double minIA = parseDouble(tfMinIA);
-        double maxIA = parseDouble(tfMaxIA);
-        double k = parseDouble(tfK);
+        double minIA = readDouble(tfMinIA, "Min inter-arrival");
+        double maxIA = readDouble(tfMaxIA, "Max inter-arrival");
+        double k = readDouble(tfK, "k (sigmoid)");
 
-        double kb = parseDouble(tfKitchenBase);
-        double kpp = parseDouble(tfKitchenPerPlate);
-        double kj = parseDouble(tfKitchenJitter);
+        double kb = readDouble(tfKitchenBase, "Kitchen base");
+        double kpp = readDouble(tfKitchenPerPlate, "Kitchen per plate");
+        double kj = readDouble(tfKitchenJitter, "Kitchen jitter");
+
 
         List<Double> effs = new ArrayList<>();
         for (WaiterRow wr : waiterRows) effs.add(wr.efficiency.get());
@@ -215,7 +257,7 @@ public class MainView {
         lblAssigned.setText(String.valueOf(r.assignedTasks));
         lblAvgWait.setText(String.format("%.4f", r.avgTaskWait));
         lblUtilCV.setText(String.format("%.4f", r.utilizationCV));
-        lblCsvPath.setText(r.logFilePath == null ? "-" : "result.csv");
+        lblCsvPath.setText("result.csv");
 
         waiterResultRows.clear();
         for (WaiterSnapshot w : r.waiters) {
@@ -258,7 +300,7 @@ public class MainView {
         XYChart.Series<String, Number> sBF = new XYChart.Series<>();
         sBF.setName("BF");
 
-        //assumiamo stessi ID in entrambi
+        //Assumiamo stessi ID in entrambi
         for(WaiterSnapshot w : rr.waiters){
             sRR.getData().add(new XYChart.Data<>(String.valueOf(w.id), w.utilization));
         }
@@ -272,26 +314,6 @@ public class MainView {
     //endregion
 
     // ----- UI helpers -----
-    private void initDefaultWaiters(int n) {
-        waiterRows.clear();
-        for (int i = 1; i <= n; i++) waiterRows.add(new WaiterRow(i, 1.0));
-    }
-
-    private void setupWaiterTable() {
-        waiterTable.setEditable(true);
-        waiterTable.setItems(waiterRows);
-
-        TableColumn<WaiterRow, Number> colId = new TableColumn<>("ID");
-        colId.setCellValueFactory(c -> c.getValue().id);
-
-        TableColumn<WaiterRow, Double> colEff = new TableColumn<>("Efficiency");
-        colEff.setCellValueFactory(c -> c.getValue().efficiency.asObject());
-        colEff.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        colEff.setOnEditCommit(evt -> evt.getRowValue().efficiency.set(evt.getNewValue()));
-
-        waiterTable.getColumns().addAll(colId, colEff);
-        waiterTable.setPrefHeight(200);
-    }
 
     private void setupCompareTable(){
         compareTable.setItems(compareRows);
@@ -314,6 +336,27 @@ public class MainView {
     }
 
     //region Waiter
+
+    private void initDefaultWaiters(int n) {
+        waiterRows.clear();
+        for (int i = 1; i <= n; i++) waiterRows.add(new WaiterRow(i, 1.0));
+    }
+
+    private void setupWaiterTable() {
+        waiterTable.setEditable(true);
+        waiterTable.setItems(waiterRows);
+
+        TableColumn<WaiterRow, Number> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(c -> c.getValue().id);
+
+        TableColumn<WaiterRow, Double> colEff = new TableColumn<>("Efficiency");
+        colEff.setCellValueFactory(c -> c.getValue().efficiency.asObject());
+        colEff.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        colEff.setOnEditCommit(evt -> evt.getRowValue().efficiency.set(evt.getNewValue()));
+
+        waiterTable.getColumns().addAll(colId, colEff);
+        waiterTable.setPrefHeight(200);
+    }
 
     private void setupWaiterResultTable() {
         waiterResultTable.setItems(waiterResultRows);
@@ -350,7 +393,7 @@ public class MainView {
     }
 
     private void setupWaiterCompareChart(){
-        waiterCompareChart.setTitle("Waiters utilizazion comparison");
+        waiterCompareChart.setTitle("Waiters utilization comparison");
         waiterXAxis.setLabel("Waiter ID");
         waiterYAxis.setLabel("Utilization");
         waiterCompareChart.setLegendVisible(true);

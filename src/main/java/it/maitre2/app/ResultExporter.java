@@ -2,7 +2,6 @@ package it.maitre2.app;
 
 import it.maitre2.model.TableState;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -49,7 +48,7 @@ public class ResultExporter {
 
     private static String escape(String s){
         if(s == null) return null;
-        //Non ci sono virgolette ma per sicurezza
+        //Non ci sono virgole ma per sicurezza
         return s.replace(",", "_");
     }
 }
