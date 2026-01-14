@@ -1,11 +1,13 @@
 package it.maitre2.simulation;
 
 public class EngineConfig {
+
     public final double durationMinutes;
 
     public final double minInterArrival;
     public final double maxInterArrival;
     public final double kSigmoid;
+
     public final int maxTables;
 
     public EngineConfig(double durationMinutes, double minInterArrival, double maxInterArrival, double kSigmoid, int maxTables) {

@@ -20,11 +20,13 @@ public class RunResult {
 
     public final String logFilePath; //null se non salvato
 
+    public final double makespanMinutes;
+
     public RunResult(String strategyName,
                      long assignedTasks, double avgTaskWait,
                      double utilizationCV,
                      Map<TableState, Integer> tablesByState, List<WaiterSnapshot> waiters,
-                     String logFilePath) {
+                     String logFilePath, double makespanMinutes) {
         this.strategyName = strategyName;
         this.assignedTasks = assignedTasks;
         this.avgTaskWait = avgTaskWait;
@@ -32,6 +34,7 @@ public class RunResult {
         this.tablesByState = tablesByState;
         this.waiters = waiters;
         this.logFilePath = logFilePath;
+        this.makespanMinutes = makespanMinutes;
     }
 
     public static Map<TableState, Integer> emptyStateMap(){

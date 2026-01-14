@@ -29,7 +29,7 @@ public class MetricCollector {
 
     //Restituisce la metrica utilizationCV, ovvero il coefficiente di variazione dell'utilizzazione dei camerieri
     //Se utilizationCV = 0 -> carico perfettamente bilanciato
-    public double utilizationCV(List<Waiter> waiters, double endTime){
+    public double utilizationCV(List<Waiter> waiters, double makespan){
         int n = waiters.size();
         if(n == 0) return 0.0;
 
@@ -39,7 +39,7 @@ public class MetricCollector {
         //Calcoliamo la media delle utilizzazioni, quindi il livello medio di carico
         for(int i = 0; i < n; i++){
             Waiter waiter = waiters.get(i);
-            double maxWork = endTime * waiter.getEfficiency();
+            double maxWork = makespan * waiter.getEfficiency();
             doubles[i] = maxWork == 0 ? 0 : waiter.getWorkloadTime() / maxWork;
             sum += doubles[i];
         }

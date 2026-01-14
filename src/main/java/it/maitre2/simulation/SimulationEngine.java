@@ -1,7 +1,6 @@
 package it.maitre2.simulation;
 
 import it.maitre2.metrics.MetricCollector;
-import it.maitre2.util.RunLogger;
 import it.maitre2.agent.Assignment;
 import it.maitre2.agent.Strategy;
 import it.maitre2.kitchen.Kitchen;
@@ -12,30 +11,29 @@ import java.util.PriorityQueue;
 
 public class SimulationEngine {
 
-    private final RunLogger logger;
 
     private final MetricCollector metrics;
 
     private final DiningRoom room;
     private final Kitchen kitchen;
     private final Strategy strategy;
+
     private final PriorityQueue<Event> eventQueue = new PriorityQueue<>();
+
     private final Random rng;
     private double now = 0.0;
-    private int nextTableId = 1;
 
-    private final EngineConfig cfg;
+    private int nextTableId = 1;
     private int createdTables = 0;
 
+    private final EngineConfig cfg;
 
 
-
-    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, RunLogger logger, MetricCollector metrics, EngineConfig cfg) {
+    public SimulationEngine(DiningRoom room, Kitchen kitchen, Strategy strategy, long seed, MetricCollector metrics, EngineConfig cfg) {
         this.room = room;
         this.kitchen = kitchen;
         this.strategy = strategy;
         rng = new Random(seed);
-        this.logger = logger;
         this.metrics = metrics;
         this.cfg = cfg;
     }
@@ -58,7 +56,6 @@ public class SimulationEngine {
 
     public void step() {
         Event e = eventQueue.poll();
-        logger.log("\n---EVENT-> " + e);
         if(e == null) return;
 
         now = e.getTime();
@@ -76,13 +73,11 @@ public class SimulationEngine {
                 createdTables++;
 
                 int id = newTableId();
-                int clients = 2 + rng.nextInt(4); // da due a cinque clienti per tavolo
-                Table t = new Table(id, clients, TableState.NEW, now);
+                int clients = 2 + rng.nextInt(4); // da due a cinque clienti per tavolo casualmente
+                Table t = new Table(id, clients, TableState.NEW);
                 room.addTable(t);
 
                 schedule(new Event(now + delay(0.5,1.5),EventType.READY_TO_ORDER,id));
-
-                logger.log(String.format( "---ARRIVAL -> table %d with %d clients", id, clients));
 
                 double next = now + interArrivalMinutes();
 
@@ -96,7 +91,7 @@ public class SimulationEngine {
 
                 //il tavolo entra nello stato "ready to order" dopo un piccolo delay
                 table.setState(TableState.NEW, now);
-                schedule(new Event(now + delay(0.5, 1.5),EventType.READY_TO_ORDER, tableId));
+                schedule(new Event(now + delay(0.5, 3),EventType.READY_TO_ORDER, tableId));
             }
 
             case READY_TO_ORDER -> {
@@ -105,12 +100,13 @@ public class SimulationEngine {
                 table.setState(TableState.WAITING_ORDER, now);
                 room.pushReadyTask(new Task(TaskType.TAKE_ORDER, tableId, now, 0));
 
-                //dopo che ordina, parte la cucina e poi arriva FOOD_READY
+                //dopo che ordina, parte la cucina
                 int plates = samplePlates(table.getNumClients());
                 kitchen.scheduleFoodReady(this, now,tableId, plates);
 
             }
 
+            //viene settato in questo stato dalla cucina
             case FOOD_READY ->{
                 Table table = room.getTable(tableId);
 
@@ -137,8 +133,6 @@ public class SimulationEngine {
                 Waiter doneWaiter = room.getWaiterById(waiterId);
                 doneWaiter.setBusy(false);
 
-                logger.log("---DONE -> waiter " + waiterId + " does " + doneType + " for table=" + tableId + ")");
-
                 //aggiornamento di stato tavolo
                 Table t = room.getTable(tableId);
                 if(doneType == TaskType.TAKE_ORDER){
@@ -152,8 +146,11 @@ public class SimulationEngine {
         }
         }
 
+
+        // --- Metodi privati ---
         private void dispatchAssignment() {
             while(room.hasReadyTasks() && !room.getFreeWaiter().isEmpty()){
+                //prendiamo la lista di task e di camerieri liberi
                 var tasks = room.snapshotReadyTasks();
                 var free = room.getFreeWaiter();
 
@@ -174,12 +171,10 @@ public class SimulationEngine {
                 //durata stimata
                 double duration = estimateTaskDurationMinutes(task, waiter);
 
-                logger.log("---ASSIGN -> waiter " + waiter.getId() + " does " + task + "(duration=" + duration + ")");
-
                 //aggiorna carico
                 waiter.addWorkloadTime(duration);
 
-                //schedula fine task
+                //schedula task
                 schedule(new Event(now + duration, task.getTableId(), waiter.getId(), task.getType()));
             }
         }
@@ -206,14 +201,15 @@ public class SimulationEngine {
             return nextTableId++;
         }
 
+        //Nuovi arrivi in base ad una funzione Sigmoide
         private double interArrivalMinutes(){
-            double x = now / cfg.durationMinutes; //0..1
+            double x = now / cfg.durationMinutes;
             double sigmoid = 1.0 / (1.0 + Math.exp(-cfg.kSigmoid * (x - 0.5)));
 
             //invertiamo: più sigmoid è alta, al centro del turno, più arrivi e meno tempo fra gli arrivi
             double mean = cfg.maxInterArrival - (cfg.maxInterArrival - cfg.minInterArrival) * sigmoid;
 
-            //aggiungiamo anche rumore
+            //aggiungiamo rumore
             return mean * (0.7 + 0.6*rng.nextDouble());
         }
 }

@@ -11,15 +11,15 @@ import it.maitre2.simulation.EngineConfig;
 import it.maitre2.simulation.Event;
 import it.maitre2.simulation.EventType;
 import it.maitre2.simulation.SimulationEngine;
-import it.maitre2.util.RunLogger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class SimulationRunner {
 
-    public static RunResult run(SimulationConfig cfg, Strategy strategy, boolean saveLog) {
+    public static RunResult run(SimulationConfig cfg, Strategy strategy, boolean saveCsv) {
 
         //Genera camerieri
         List<Waiter> waiters = generateWaiters(cfg);
@@ -36,25 +36,13 @@ public class SimulationRunner {
 
         //Logger (null object se non salvi)
         String logPath = null;
-        final RunLogger logger;
 
-        if(saveLog){
-            logPath = "run-" + strategy.getClass() +"-seed" + cfg.seed + ".log";
-            logger = new RunLogger(logPath);
-        }else{
-            logger = new RunLogger("temp.log"){
-                @Override public void log(String msg){ }
-                @Override public void close(){ }
-            };
-        }
-
-        try(logger){
             //Engine
             EngineConfig engineCfg = new EngineConfig(cfg.durationMinutes, cfg.minInterArrival,
                     cfg.maxInterArrival, cfg.kSigmoid, cfg.maxTables);
 
             SimulationEngine engine = new SimulationEngine(room, kitchen, strategy,
-                    cfg.seed, logger, metrics, engineCfg);
+                    cfg.seed, metrics, engineCfg);
 
             //Kickstart arrivi
             engine.schedule(new Event(0.0, EventType.ARRIVAL,-1 ));
@@ -75,13 +63,24 @@ public class SimulationRunner {
                 ws.add(new WaiterSnapshot(waiter.getId(), waiter.getEfficiency(), waiter.getWorkloadTime(), util));
             }
 
-            double utilCV = metrics.utilizationCV(room.getWaiters(), cfg.durationMinutes);
+            /*
+            Non utilizziamo cfg.durationMinutes, perchè porta ad errori di calcolo nel caso
+            in cui la simulazione finisce prima della fine impostata.
+            */
+            double makespan = engine.now();
+            double utilCV = metrics.utilizationCV(room.getWaiters(), makespan);
 
-            return new RunResult(strategy.getClass().getSimpleName(),
+            RunResult r = new RunResult(strategy.getClass().getSimpleName(),
                     metrics.assignedTasksCount(),
                     metrics.avgTaskWait(),
-                    utilCV,counts,ws,saveLog ? logPath : null);
+                    utilCV,counts,ws, saveCsv ? logPath : null, makespan);
+
+            //Esporta CSV
+        if(saveCsv){
+            ResultExporter.appendRow("result.csv", r, cfg.seed, cfg.durationMinutes, makespan);
         }
+
+        return r;
     }
 
     private static List<Waiter> generateWaiters(SimulationConfig cfg){
